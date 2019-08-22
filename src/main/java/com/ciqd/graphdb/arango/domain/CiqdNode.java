@@ -12,7 +12,6 @@ import java.util.Collection;
 @Document("ciqdnodes")
 @HashIndex(fields={"nodeName","nodeType"}, unique = true)
 public class CiqdNode {
-
     @Id
     private String id;
     private String nodeName;
