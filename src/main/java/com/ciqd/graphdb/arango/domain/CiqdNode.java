@@ -9,7 +9,7 @@ import org.springframework.data.annotation.Id;
 import javax.persistence.GeneratedValue;
 import java.util.Collection;
 
-@Document
+@Document("ciqdnodes")
 @HashIndex(fields={"nodeName","nodeType"}, unique = true)
 public class CiqdNode {
 
