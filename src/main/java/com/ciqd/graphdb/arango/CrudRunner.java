@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.ComponentScan;
 import com.arangodb.springframework.core.ArangoOperations;
+
+import java.util.Set;
 import java.util.Spliterators;
 import java.util.stream.StreamSupport;
 
@@ -67,6 +69,12 @@ public class CrudRunner implements CommandLineRunner {
         System.out.println("## These are the parents of test step node");
         final Iterable<CiqdNode> parentsOfTestStepNode = ciqdNodeRepository.findByRelationNodesNodeName("T1");
         parentsOfTestStepNode.forEach((n) -> System.out.println(n.getNodeName()));
+
+        System.out.println("## Find all childs and grantchilds of 'Start Node' (sort by name descending) with AQL query");
+        ciqdNodeRepository.findByNodeNameAndNodeType("S", "START_NODE").ifPresent(startnode -> {
+            final Set<CiqdNode> relations = ciqdNodeRepository.getAllChildNodesAndGrandchildNodes("ciqdnodes/" + startnode.getId(), CiqdNodeRelationship.class);
+            relations.forEach((n)->System.out.println(n.getNodeName()));
+        });
 
     }
 
