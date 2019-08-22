@@ -19,6 +19,7 @@ import java.util.Collection;
 
 import static com.ciqd.graphdb.arango.CrudRunner.createNodes;
 
+/*** Please use CrudRunner in main folder **/
 @Ignore
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -39,8 +40,6 @@ public class CiqdNodeRepositoryTest {
                 operations.dropDatabase();
                 Collection<CiqdNode> ciqdNodes = createNodes();
                 ciqdNodeRepository.saveAll(ciqdNodes);
-
-
         }
 
         @Test
