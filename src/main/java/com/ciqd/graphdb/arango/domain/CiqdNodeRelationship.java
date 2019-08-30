@@ -17,12 +17,13 @@ public class CiqdNodeRelationship {
 
     @To
     private CiqdNode targetNode;
+    private String type;
 
-
-    public CiqdNodeRelationship(final CiqdNode targetNode,final CiqdNode srcNode) {
+    public CiqdNodeRelationship(final CiqdNode targetNode,final CiqdNode srcNode, final String type) {
         super();
         this.targetNode = targetNode;
         this.srcNode=srcNode;
+        this.type=type;
     }
 
     public String getId() {
@@ -47,6 +48,14 @@ public class CiqdNodeRelationship {
 
     public void setTargetNode(CiqdNode targetNode) {
         this.targetNode = targetNode;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     @Override

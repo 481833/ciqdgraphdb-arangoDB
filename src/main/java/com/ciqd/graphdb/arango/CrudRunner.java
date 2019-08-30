@@ -4,7 +4,6 @@ package com.ciqd.graphdb.arango;
 import com.ciqd.graphdb.arango.domain.CiqdEdge;
 import com.ciqd.graphdb.arango.domain.CiqdNode;
 import com.ciqd.graphdb.arango.domain.CiqdNodeRelationship;
-import com.ciqd.graphdb.arango.repository.CiqdEdgeRepository;
 import com.ciqd.graphdb.arango.repository.CiqdNodeRelationshipRepository;
 import com.ciqd.graphdb.arango.repository.CiqdNodeRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,9 +29,6 @@ public class CrudRunner implements CommandLineRunner {
 
     @Autowired
     private CiqdNodeRepository ciqdNodeRepository;
-
-    @Autowired
-    private CiqdEdgeRepository ciqdEdgeRepository;
 
     @Autowired
     private ArangoOperations operations;
@@ -75,19 +71,16 @@ public class CrudRunner implements CommandLineRunner {
 
 
         ciqdNodeRepository.saveAll(ciqdNodes);
-        ciqdEdgeRepository.saveAll(ciqdEdges);
 
         System.out.println(String.format("Ciqd node saved in the database : '%s'", ciqdNodeRepository.count()));
-        System.out.println(String.format("Ciqd edges saved in the database : '%s'", ciqdEdgeRepository.count()));
 
-        // Create relationships between nodes
-        Iterable<CiqdEdge> ciqdEdgeIterable = ciqdEdgeRepository.findAll();
-        Iterator edgesIterator = ciqdEdgeIterable.iterator();
+       // Iterable<CiqdEdge> ciqdEdgeIterable = ciqdEdgeRepository.findAll();
+        Iterator edgesIterator = ciqdEdges.iterator();
         while (edgesIterator.hasNext()) {
            CiqdEdge ciqdEdge = (CiqdEdge) edgesIterator.next();
             ciqdNodeRepository.findByOldId(ciqdEdge.getSourceId()).ifPresent(srcNode -> {
                 ciqdNodeRepository.findByOldId(ciqdEdge.getTargetId()).ifPresent(targetNode -> {
-                    ciqdNodeRelationshipRepository.save(new CiqdNodeRelationship(targetNode,srcNode));
+                    ciqdNodeRelationshipRepository.save(new CiqdNodeRelationship(targetNode,srcNode,edgeType));
                 });
             });
             }
