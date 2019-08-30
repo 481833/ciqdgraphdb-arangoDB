@@ -5,13 +5,12 @@ import com.arangodb.springframework.annotation.From;
 import com.arangodb.springframework.annotation.To;
 import org.springframework.data.annotation.Id;
 
-import javax.persistence.GeneratedValue;
-
-@Edge
+@Edge("noderelationships")
 public class CiqdNodeRelationship {
+
     @Id
-    @GeneratedValue
-    private String relationshipId;
+    private String id;
+
 
     @From
     private CiqdNode srcNode;
@@ -19,19 +18,20 @@ public class CiqdNodeRelationship {
     @To
     private CiqdNode targetNode;
 
-    public CiqdNodeRelationship(CiqdNode srcNode, CiqdNode targetNode) {
-        this.srcNode = srcNode;
-        this.targetNode=targetNode;
+
+    public CiqdNodeRelationship(final CiqdNode targetNode,final CiqdNode srcNode) {
+        super();
+        this.targetNode = targetNode;
+        this.srcNode=srcNode;
     }
 
-    public String getRelationshipId() {
-        return relationshipId;
+    public String getId() {
+        return id;
     }
 
-    public void setRelationshipId(String relationshipId) {
-        this.relationshipId = relationshipId;
+    public void setId(String id) {
+        this.id = id;
     }
-
 
     public CiqdNode getSrcNode() {
         return srcNode;
@@ -51,7 +51,6 @@ public class CiqdNodeRelationship {
 
     @Override
     public String toString() {
-        return "ChildOf [id=" + relationshipId + ", targetNode=" + targetNode + ", srcNode=" + srcNode + "]";
+        return "CiqdNodeRelationship [id=" + id + ", targetNode=" + targetNode + ", srcNode=" + srcNode + "]";
     }
-
 }

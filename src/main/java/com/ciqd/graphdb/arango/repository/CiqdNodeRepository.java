@@ -4,7 +4,6 @@ import com.arangodb.springframework.annotation.Query;
 import com.arangodb.springframework.repository.ArangoRepository;
 import com.ciqd.graphdb.arango.domain.CiqdNode;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.Set;
@@ -12,13 +11,14 @@ import java.util.Set;
 
 public interface CiqdNodeRepository extends ArangoRepository<CiqdNode, String> {
 
-    Optional<CiqdNode> findByNodeNameAndNodeType(String nodeName, String nodeType);
-    Iterable<CiqdNode> findByRelationNodesNodeName(String name);
+    Optional<CiqdNode> findByOldId(String oldId);
+    Optional<CiqdNode> findByType(String type);
+    Iterable<CiqdNode> findByRelationNodesType(String type);
 
-    @Query("FOR c IN ciqdnodes FILTER c.nodename == @nodeName SORT c.nodeName ASC RETURN c")
-    Iterable<Character> getWithNodeName(@Param("nodename") String value);
+    @Query("FOR c IN nodes FILTER c.oldId == @oldId RETURN c")
+    Iterable<CiqdNode> getWithOldId(@Param("oldId") String id);
 
-    @Query("FOR v IN 1..2 INBOUND @id @@edgeCol SORT v.nodeName DESC RETURN DISTINCT v")
+    @Query("FOR v IN 1..2 INBOUND @id @@edgeCol RETURN v")
     Set<CiqdNode> getAllChildNodesAndGrandchildNodes(@Param("id") String id, @Param("@edgeCol") Class<?> edgeCollection);
 
 }

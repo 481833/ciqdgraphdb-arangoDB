@@ -6,48 +6,91 @@ import com.arangodb.springframework.annotation.HashIndex;
 import com.arangodb.springframework.annotation.Relations;
 import org.springframework.data.annotation.Id;
 
-import javax.persistence.GeneratedValue;
 import java.util.Collection;
 
-@Document("ciqdnodes")
-@HashIndex(fields={"nodeName","nodeType"}, unique = true)
+
+@Document("nodes")
+//@HashIndex(fields={"type"}, unique = false)
 public class CiqdNode {
+
     @Id
     private String id;
-    private String nodeName;
-    private String nodeType;
 
+    private String type;
+    private String oldId;
+    private String position;
+    private String size;
+    private String attrs;
 
-    @Relations(edges= CiqdNodeRelationship.class, lazy = true)
+    @Relations(edges=CiqdNodeRelationship.class, lazy = true)
     private Collection<CiqdNode> relationNodes;
 
-    public CiqdNode(String nodeName,String nodeType) {
+    public CiqdNode() {
         super();
-        this.nodeName = nodeName;
-        this.nodeType = nodeType;
+    }
+
+
+
+    public CiqdNode(String type, String oldId, String position, String size, String attrs) {
+        super();
+        this.type = type;
+        this.oldId = oldId;
+        this.position = position;
+        this.size = size;
+
+        this.attrs = attrs;
+    }
+
+    public String getOldId() {
+        return oldId;
+    }
+
+    public void setOldId(String oldId) {
+        this.oldId = oldId;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public void setPosition(String position) {
+        this.position = position;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
+    }
+
+    public String getAttrs() {
+        return attrs;
+    }
+
+    public void setAttrs(String attrs) {
+        this.attrs = attrs;
     }
 
     public String getId() {
         return id;
     }
+
     public void setId(String id) {
         this.id = id;
     }
 
-    public String getNodeName() {
-        return nodeName;
-    }
-
-    public void setNodeName(String nodeName) {
-        this.nodeName = nodeName;
-    }
-
-    public String getNodeType() {
-        return nodeType;
-    }
-
-    public void setNodeType(String nodeType) {
-        this.nodeType = nodeType;
+    public void setRelationNodes(Collection<CiqdNode> relationNodes) {
+        this.relationNodes = relationNodes;
     }
 
     public Collection<CiqdNode> getRelationNodes() {
@@ -56,4 +99,5 @@ public class CiqdNode {
     public void setCiqdNodes(final Collection<CiqdNode> relationNodes) {
         this.relationNodes = relationNodes;
     }
+
 }
