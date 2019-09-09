@@ -41,7 +41,7 @@ public class CrudRunner implements CommandLineRunner {
 
     ApplicationContext context;
 
-    @Value("classpath:data/test1.json")
+    @Value("classpath:data/VVVComplex.json")
     Resource resource;
 
     private final static String startType = "ciqdelements.uml.Start";
