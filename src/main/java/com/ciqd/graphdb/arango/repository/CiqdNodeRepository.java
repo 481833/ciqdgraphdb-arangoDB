@@ -4,10 +4,10 @@ import com.arangodb.springframework.annotation.Query;
 import com.arangodb.springframework.repository.ArangoRepository;
 import com.ciqd.graphdb.arango.domain.CiqdNode;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.Set;
-
 
 public interface CiqdNodeRepository extends ArangoRepository<CiqdNode, String> {
 
