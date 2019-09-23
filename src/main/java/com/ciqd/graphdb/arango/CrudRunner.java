@@ -1,6 +1,7 @@
 package com.ciqd.graphdb.arango;
 
 
+import com.arangodb.ArangoCursor;
 import com.ciqd.graphdb.arango.domain.CiqdEdge;
 import com.ciqd.graphdb.arango.domain.CiqdNode;
 import com.ciqd.graphdb.arango.domain.CiqdNodeRelationship;
@@ -17,12 +18,28 @@ import org.springframework.core.io.ResourceLoader;
 
 import java.io.File;
 import java.io.FileReader;
+import java.sql.SQLOutput;
 import java.util.*;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.Resource;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+
+import com.arangodb.ArangoCursor;
+import com.arangodb.ArangoDBException;
+import com.arangodb.ArangoCollection;
+import com.arangodb.ArangoCursor;
+import com.arangodb.ArangoDB;
+import com.arangodb.ArangoDatabase;
+import com.arangodb.entity.BaseDocument;
+import com.arangodb.entity.BaseEdgeDocument;
+import com.arangodb.entity.CollectionType;
+import com.arangodb.entity.DocumentCreateEntity;
+import com.arangodb.model.CollectionCreateOptions;
+
 
 @ComponentScan("com.ciqd.graphdb.arango")
 public class CrudRunner implements CommandLineRunner {
@@ -41,7 +58,7 @@ public class CrudRunner implements CommandLineRunner {
 
     ApplicationContext context;
 
-    @Value("classpath:data/VVVComplex.json")
+    @Value("classpath:data/loop1.json")
     Resource resource;
 
     private final static String startType = "ciqdelements.uml.Start";
@@ -49,6 +66,10 @@ public class CrudRunner implements CommandLineRunner {
     private final static String decisionType = "ciqdelements.uml.Decision";
     private final static String finalType = "ciqdelements.uml.Final";
     private final static String edgeType = "ciqdelements.uml.Edge";
+
+    private static ArangoDB arangoDB;
+    private static ArangoDatabase db;
+    private static final String TEST_DB = "CIQD-TESTDB";
 
     @Override
     public void run(final String... args) throws Exception {
@@ -75,6 +96,7 @@ public class CrudRunner implements CommandLineRunner {
         System.out.println(String.format("Ciqd node saved in the database : '%s'", ciqdNodeRepository.count()));
 
        // Iterable<CiqdEdge> ciqdEdgeIterable = ciqdEdgeRepository.findAll();
+
         Iterator edgesIterator = ciqdEdges.iterator();
         while (edgesIterator.hasNext()) {
            CiqdEdge ciqdEdge = (CiqdEdge) edgesIterator.next();
@@ -106,6 +128,9 @@ public class CrudRunner implements CommandLineRunner {
         ciqdNodeRepository.findByType(startType).ifPresent(startnode -> {
         final Set<CiqdNode> relations = ciqdNodeRepository.getAllChildNodesAndGrandchildNodes( "nodes/" + startnode.getId(), CiqdNodeRelationship.class);
         relations.forEach((n)->System.out.println(n.getType())); });
+
+        System.out.println("## Find all vertices for paths with AQL query");
+        ciqdNodeRepository.findByType(startType).ifPresent(startnode -> getLoopPaths(startnode));
     }
 
         public Collection<Object>  createNodesAndRelationships () {
@@ -142,6 +167,33 @@ public class CrudRunner implements CommandLineRunner {
         }
 
         return nodesAndRelationships;
+    }
+
+    public void getLoopPaths(CiqdNode ciqdNode) {
+        String nodesId="nodes/"+ciqdNode.getId();
+        Collection<String> vertices = ciqdNodeRepository.getVerticesForPaths(nodesId, CiqdNodeRelationship.class);
+        Set<String> duplicateVertices = findDuplicates(vertices);
+        duplicateVertices.forEach(i-> {
+            String duplicateVerticeNode = "nodes/" + i.replace("\"","");
+            Collection<String> loopPaths = ciqdNodeRepository.getLoopPaths(duplicateVerticeNode , CiqdNodeRelationship.class);
+            System.out.println(loopPaths);
+        });
+    }
+
+    private static Set<String> findDuplicates(Collection<String> vertices)
+    {
+        String[] verticesArray = vertices.toArray(new String[0]);
+        Set duplicateVertices= new HashSet<>();
+        for(int n=0; n < vertices.size(); n++) {
+            String strArray[] = verticesArray[n].split(",");
+            //System.out.println(verticesArray[n]);
+            Set<String> uniqueElements = new HashSet<>();
+            Set<String> duplicateElements= Arrays.stream(strArray)
+                    .filter(i -> !uniqueElements.add(i))
+                    .collect(Collectors.toSet());
+            if (duplicateElements != null && !duplicateElements.isEmpty()) duplicateElements.forEach(t-> duplicateVertices.add(t));
+        }
+        return duplicateVertices;
     }
 }
 
