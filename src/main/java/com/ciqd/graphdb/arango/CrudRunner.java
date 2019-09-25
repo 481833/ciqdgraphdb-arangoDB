@@ -58,7 +58,7 @@ public class CrudRunner implements CommandLineRunner {
 
     ApplicationContext context;
 
-    @Value("classpath:data/loop1.json")
+    @Value("classpath:data/multipleLoops.json")
     Resource resource;
 
     private final static String startType = "ciqdelements.uml.Start";
@@ -172,28 +172,30 @@ public class CrudRunner implements CommandLineRunner {
     public void getLoopPaths(CiqdNode ciqdNode) {
         String nodesId="nodes/"+ciqdNode.getId();
         Collection<String> vertices = ciqdNodeRepository.getVerticesForPaths(nodesId, CiqdNodeRelationship.class);
-        Set<String> duplicateVertices = findDuplicates(vertices);
-        duplicateVertices.forEach(i-> {
-            String duplicateVerticeNode = "nodes/" + i.replace("\"","");
-            Collection<String> loopPaths = ciqdNodeRepository.getLoopPaths(duplicateVerticeNode , CiqdNodeRelationship.class);
+        Set<String> loopVertices = findLoopVertices(vertices);
+        loopVertices.forEach(i-> {
+            String duplicateVerticesNode = "nodes/" + i;
+            Collection<String> loopPaths = ciqdNodeRepository.getLoopPaths(duplicateVerticesNode , CiqdNodeRelationship.class);
             System.out.println(loopPaths);
         });
     }
 
-    private static Set<String> findDuplicates(Collection<String> vertices)
+    private static Set<String> findLoopVertices(Collection<String> vertices)
     {
-        String[] verticesArray = vertices.toArray(new String[0]);
-        Set duplicateVertices= new HashSet<>();
-        for(int n=0; n < vertices.size(); n++) {
-            String strArray[] = verticesArray[n].split(",");
-            //System.out.println(verticesArray[n]);
+        String[] pathsArray = vertices.toArray(new String[0]);
+        Set<String> loopVertices = new HashSet<>();
+        for(int i=0; i < pathsArray.length; i++) {
             Set<String> uniqueElements = new HashSet<>();
-            Set<String> duplicateElements= Arrays.stream(strArray)
-                    .filter(i -> !uniqueElements.add(i))
-                    .collect(Collectors.toSet());
-            if (duplicateElements != null && !duplicateElements.isEmpty()) duplicateElements.forEach(t-> duplicateVertices.add(t));
+            String[] verticesArray = pathsArray[i].split(",");
+            for(int n=0; n < verticesArray.length; n++) {
+                String element = verticesArray[n].replace("\"","").replace("[","").replace("]","");
+                if (!uniqueElements.add(element)) {
+                    loopVertices.add(element);
+                }
+            }
         }
-        return duplicateVertices;
+        //loopVertices.forEach(k-> System.out.println(k));
+        return loopVertices;
     }
 }
 

@@ -22,10 +22,11 @@ public interface CiqdNodeRepository extends ArangoRepository<CiqdNode, String> {
     @Query("FOR v IN 1..100 OUTBOUND @id @@edgeCol RETURN v")
     Set<CiqdNode> getAllChildNodesAndGrandchildNodes(@Param("id") String id, @Param("@edgeCol") Class<?> edgeCollection);
 
-    @Query("FOR v,e,p IN 1..100 OUTBOUND @id @@edgeCol RETURN TO_STRING(p.vertices[*]._key)")
+    @Query("FOR v,e,p IN 1..100 ANY @id @@edgeCol RETURN TO_STRING(p.vertices[*]._key)")
     Collection<String> getVerticesForPaths(@Param("id") String id, @Param("@edgeCol") Class<?> edgeCollection);
 
-    @Query("FOR x IN INTERSECTION ((FOR v, e, p IN 1..100 OUTBOUND @id @@edgeCol RETURN p.vertices[*]._key), (FOR v, e, p IN 1..1000 INBOUND @id @@edgeCol RETURN p.vertices[*]._key ) ) RETURN TO_STRING(x)")
+    //@Query("FOR x IN INTERSECTION ((FOR v, e, p IN 1..100 OUTBOUND @id @@edgeCol RETURN p.vertices[*]._key), (FOR v, e, p IN 1..1000 INBOUND @id @@edgeCol RETURN p.vertices[*]._key ) ) RETURN TO_STRING(x)")
+    @Query("FOR v,e,p IN 1..100 OUTBOUND @id @@edgeCol OPTIONS{uniqueEdges: 'path', uniqueVertices: 'none'} FILTER v._id == @id RETURN TO_STRING(p.vertices[*]._key)")
     Collection<String> getLoopPaths(@Param("id") String id, @Param("@edgeCol") Class<?> edgeCollection);
 
 }
