@@ -1,15 +1,12 @@
 package com.ciqd.graphdb.arango;
 
 
-import com.arangodb.ArangoCursor;
 import com.ciqd.graphdb.arango.domain.CiqdEdge;
 import com.ciqd.graphdb.arango.domain.CiqdNode;
 import com.ciqd.graphdb.arango.domain.CiqdNodeRelationship;
 import com.ciqd.graphdb.arango.repository.CiqdNodeRelationshipRepository;
 import com.ciqd.graphdb.arango.repository.CiqdNodeRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.RegExUtils;
-import org.apache.commons.lang3.StringUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -29,18 +26,9 @@ import org.springframework.core.io.Resource;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-
-import com.arangodb.ArangoCursor;
-import com.arangodb.ArangoDBException;
-import com.arangodb.ArangoCollection;
-import com.arangodb.ArangoCursor;
 import com.arangodb.ArangoDB;
 import com.arangodb.ArangoDatabase;
-import com.arangodb.entity.BaseDocument;
-import com.arangodb.entity.BaseEdgeDocument;
-import com.arangodb.entity.CollectionType;
-import com.arangodb.entity.DocumentCreateEntity;
-import com.arangodb.model.CollectionCreateOptions;
+import org.springframework.util.StringUtils;
 
 
 @ComponentScan("com.ciqd.graphdb.arango")
@@ -89,9 +77,9 @@ public class CrudRunner implements CommandLineRunner {
             Object entry= iterator.next();
             if (CiqdNode.class.equals(entry.getClass())) {
                 ciqdNodes.add((CiqdNode) entry);
-                } else if (CiqdEdge.class.equals(entry.getClass())) {
-                    ciqdEdges.add((CiqdEdge)entry);
-                }
+            } else if (CiqdEdge.class.equals(entry.getClass())) {
+                ciqdEdges.add((CiqdEdge)entry);
+            }
         }
 
 
@@ -99,29 +87,29 @@ public class CrudRunner implements CommandLineRunner {
 
         System.out.println(String.format("Ciqd node saved in the database : '%s'", ciqdNodeRepository.count()));
 
-       // Iterable<CiqdEdge> ciqdEdgeIterable = ciqdEdgeRepository.findAll();
+        // Iterable<CiqdEdge> ciqdEdgeIterable = ciqdEdgeRepository.findAll();
 
         Iterator edgesIterator = ciqdEdges.iterator();
         while (edgesIterator.hasNext()) {
-           CiqdEdge ciqdEdge = (CiqdEdge) edgesIterator.next();
+            CiqdEdge ciqdEdge = (CiqdEdge) edgesIterator.next();
             ciqdNodeRepository.findByOldId(ciqdEdge.getSourceId()).ifPresent(srcNode -> {
                 ciqdNodeRepository.findByOldId(ciqdEdge.getTargetId()).ifPresent(targetNode -> {
                     ciqdNodeRelationshipRepository.save(new CiqdNodeRelationship(targetNode,srcNode,edgeType));
                 });
             });
-            }
+        }
 
-       //after we add @Relations(edges= CiqdNodeRelationship.class, lazy = true) in CiqdNode
+        //after we add @Relations(edges= CiqdNodeRelationship.class, lazy = true) in CiqdNode
         // we can now load all children of a CiqdNode when we fetch the node
         ciqdNodeRepository.findByType(startType).ifPresent(startnode -> {
-        System.out.println(String.format("## These are the children of %s:", startnode.getType()));
-                startnode.getRelationNodes().forEach((n) -> System.out.println(n.getType())); });
+            System.out.println(String.format("## These are the children of %s:", startnode.getType()));
+            startnode.getRelationNodes().forEach((n) -> System.out.println(n.getType())); });
 
         // the fields 'relationNodes' isn't persisted in the CiqdNode document itself, it's represented through
         // the edges. Nevertheless we can write a derived method which includes properties of the connected nodes
-         System.out.println("## These are the parents of final node");
-         final Iterable<CiqdNode> parentsONodeType = ciqdNodeRepository.findByRelationNodesType(finalType);
-            parentsONodeType.forEach((n) -> System.out.println(n.getType()));
+        System.out.println("## These are the parents of final node");
+        final Iterable<CiqdNode> parentsONodeType = ciqdNodeRepository.findByRelationNodesType(finalType);
+        parentsONodeType.forEach((n) -> System.out.println(n.getType()));
 
         System.out.println("## Find by Old Id with AQL query");
         ciqdNodeRepository.findByType(decisionType).ifPresent(decisionnode -> {
@@ -130,40 +118,40 @@ public class CrudRunner implements CommandLineRunner {
 
         System.out.println("## Find all childs and grantchilds of 'Start Node' (sort by name descending) with AQL query");
         ciqdNodeRepository.findByType(startType).ifPresent(startnode -> {
-        final Set<CiqdNode> relations = ciqdNodeRepository.getAllChildNodesAndGrandchildNodes( "nodes/" + startnode.getId(), CiqdNodeRelationship.class);
-        relations.forEach((n)->System.out.println(n.getType())); });
+            final Set<CiqdNode> relations = ciqdNodeRepository.getAllChildNodesAndGrandchildNodes( "nodes/" + startnode.getId(), CiqdNodeRelationship.class);
+            relations.forEach((n)->System.out.println(n.getType())); });
 
-      //  System.out.println("## Find all vertices for paths with AQL query");
-       // ciqdNodeRepository.findByType(startType).ifPresent(startnode -> getLoopPaths(startnode));
+        //  System.out.println("## Find all vertices for paths with AQL query");
+        // ciqdNodeRepository.findByType(startType).ifPresent(startnode -> getLoopPaths(startnode));
         getPaths();
     }
 
-        public Collection<Object>  createNodesAndRelationships () {
+    public Collection<Object>  createNodesAndRelationships () {
         //ObjectMapper objectMapper = new ObjectMapper();
         JSONParser parser = new JSONParser();
         List<Object> nodesAndRelationships = new ArrayList<>();
-             try {
-                   File file = resource.getFile();
-                   JSONObject obj = (JSONObject) parser.parse(new FileReader(file));
-                   JSONArray jsonArray = (JSONArray) obj.get("cells");
+        try {
+            File file = resource.getFile();
+            JSONObject obj = (JSONObject) parser.parse(new FileReader(file));
+            JSONArray jsonArray = (JSONArray) obj.get("cells");
 
-                   for (Object o : jsonArray) {
-                    JSONObject nodeItem = (JSONObject) o;
-                    String nodeType = nodeItem.get("type").toString();
-                    if (nodeType != null && !nodeType.equals(edgeType)) {
-                        CiqdNode ciqdNode = new CiqdNode(nodeItem.get("type").toString(), nodeItem.get("id").toString(), nodeItem.get("position").toString(), nodeItem.get("size").toString(), nodeItem.get("attrs").toString());
-                        //CiqdNode ciqdNode = objectMapper.readValue(nodeItem.toString(), CiqdNode.class);
-                        nodesAndRelationships.add(ciqdNode);
-                    } else if (nodeType != null && nodeType.equals(edgeType)) {
-                            JSONObject srcObj = (JSONObject) parser.parse(nodeItem.get("source").toString());
-                            JSONObject tgtObj = (JSONObject) parser.parse(nodeItem.get("target").toString());
-                            if (srcObj != null && tgtObj != null) {
-                                String id = nodeItem.get("id").toString();
-                                String srcId = srcObj.get("id").toString();
-                                String targetId = tgtObj.get("id").toString();
-                                CiqdEdge ciqdEdge = new CiqdEdge(id, srcId, targetId,edgeType);
-                                nodesAndRelationships.add(ciqdEdge);
-                        }
+            for (Object o : jsonArray) {
+                JSONObject nodeItem = (JSONObject) o;
+                String nodeType = nodeItem.get("type").toString();
+                if (nodeType != null && !nodeType.equals(edgeType)) {
+                    CiqdNode ciqdNode = new CiqdNode(nodeItem.get("type").toString(), nodeItem.get("id").toString(), nodeItem.get("position").toString(), nodeItem.get("size").toString(), nodeItem.get("attrs").toString());
+                    //CiqdNode ciqdNode = objectMapper.readValue(nodeItem.toString(), CiqdNode.class);
+                    nodesAndRelationships.add(ciqdNode);
+                } else if (nodeType != null && nodeType.equals(edgeType)) {
+                    JSONObject srcObj = (JSONObject) parser.parse(nodeItem.get("source").toString());
+                    JSONObject tgtObj = (JSONObject) parser.parse(nodeItem.get("target").toString());
+                    if (srcObj != null && tgtObj != null) {
+                        String id = nodeItem.get("id").toString();
+                        String srcId = srcObj.get("id").toString();
+                        String targetId = tgtObj.get("id").toString();
+                        CiqdEdge ciqdEdge = new CiqdEdge(id, srcId, targetId,edgeType);
+                        nodesAndRelationships.add(ciqdEdge);
+                    }
                 }
 
             }
@@ -216,14 +204,14 @@ public class CrudRunner implements CommandLineRunner {
         System.out.println(noLoopPath);
         Map<String,Collection<String>> loopPaths = getLoopPaths(startNode);
         noLoopPath.forEach(n-> {
-             for(Map.Entry<String,Collection<String>> entry: loopPaths.entrySet()) {
-                 String target="\"" + entry.getKey() + "\"";
-                 System.out.println("Complete path with Loops for vertex: " + target);
-                  entry.getValue().forEach(e -> {
-                      String replacement=e.replace("[","").replace("]","");
-                      String newString= StringUtils.replace(n,target,replacement);
-                      System.out.println(newString);
-                  });
+            for(Map.Entry<String,Collection<String>> entry: loopPaths.entrySet()) {
+                String target="\"" + entry.getKey() + "\"";
+                System.out.println("Complete path with Loops for vertex: " + target);
+                entry.getValue().forEach(e -> {
+                    String replacement=e.replace("[","").replace("]","");
+                    String newString= StringUtils.replace(n,target,replacement);
+                    System.out.println(newString);
+                });
             }
         });
 
