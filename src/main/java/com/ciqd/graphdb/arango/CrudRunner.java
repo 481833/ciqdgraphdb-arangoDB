@@ -8,6 +8,8 @@ import com.ciqd.graphdb.arango.domain.CiqdNodeRelationship;
 import com.ciqd.graphdb.arango.repository.CiqdNodeRelationshipRepository;
 import com.ciqd.graphdb.arango.repository.CiqdNodeRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.RegExUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -58,7 +60,9 @@ public class CrudRunner implements CommandLineRunner {
 
     ApplicationContext context;
 
-    @Value("classpath:data/multipleLoops.json")
+    //@Value("classpath:data/multipleLoops.json")
+    //@Value("classpath:data/loop1.json")
+    @Value("classpath:data/TestLoop2.json")
     Resource resource;
 
     private final static String startType = "ciqdelements.uml.Start";
@@ -129,8 +133,9 @@ public class CrudRunner implements CommandLineRunner {
         final Set<CiqdNode> relations = ciqdNodeRepository.getAllChildNodesAndGrandchildNodes( "nodes/" + startnode.getId(), CiqdNodeRelationship.class);
         relations.forEach((n)->System.out.println(n.getType())); });
 
-        System.out.println("## Find all vertices for paths with AQL query");
-        ciqdNodeRepository.findByType(startType).ifPresent(startnode -> getLoopPaths(startnode));
+      //  System.out.println("## Find all vertices for paths with AQL query");
+       // ciqdNodeRepository.findByType(startType).ifPresent(startnode -> getLoopPaths(startnode));
+        getPaths();
     }
 
         public Collection<Object>  createNodesAndRelationships () {
@@ -169,15 +174,18 @@ public class CrudRunner implements CommandLineRunner {
         return nodesAndRelationships;
     }
 
-    public void getLoopPaths(CiqdNode ciqdNode) {
+    public Map<String,Collection<String>> getLoopPaths(CiqdNode ciqdNode) {
+        Map<String, Collection<String>> loopPaths= new HashMap<>();
         String nodesId="nodes/"+ciqdNode.getId();
         Collection<String> vertices = ciqdNodeRepository.getVerticesForPaths(nodesId, CiqdNodeRelationship.class);
         Set<String> loopVertices = findLoopVertices(vertices);
         loopVertices.forEach(i-> {
             String duplicateVerticesNode = "nodes/" + i;
-            Collection<String> loopPaths = ciqdNodeRepository.getLoopPaths(duplicateVerticesNode , CiqdNodeRelationship.class);
-            System.out.println(loopPaths);
+            Collection<String> loops = ciqdNodeRepository.getLoopPaths(duplicateVerticesNode , CiqdNodeRelationship.class);
+            loopPaths.put(i,loops);
+
         });
+        return loopPaths;
     }
 
     private static Set<String> findLoopVertices(Collection<String> vertices)
@@ -196,6 +204,29 @@ public class CrudRunner implements CommandLineRunner {
         }
         //loopVertices.forEach(k-> System.out.println(k));
         return loopVertices;
+    }
+
+    public void getPaths() {
+        CiqdNode startNode = (ciqdNodeRepository.findByType(startType)).get();
+        CiqdNode finalNode = (ciqdNodeRepository.findByType(finalType)).get();
+        System.out.println("## Find all paths including loop using AQL query");
+        // get path with no loops
+        Collection<String> noLoopPath = ciqdNodeRepository.getNoLoopsPath("nodes/" + startNode.getId(), "nodes/" + finalNode.getId(), CiqdNodeRelationship.class);
+        System.out.println("No Loop Path");
+        System.out.println(noLoopPath);
+        Map<String,Collection<String>> loopPaths = getLoopPaths(startNode);
+        noLoopPath.forEach(n-> {
+             for(Map.Entry<String,Collection<String>> entry: loopPaths.entrySet()) {
+                 String target="\"" + entry.getKey() + "\"";
+                 System.out.println("Complete path with Loops for vertex: " + target);
+                  entry.getValue().forEach(e -> {
+                      String replacement=e.replace("[","").replace("]","");
+                      String newString= StringUtils.replace(n,target,replacement);
+                      System.out.println(newString);
+                  });
+            }
+        });
+
     }
 }
 
